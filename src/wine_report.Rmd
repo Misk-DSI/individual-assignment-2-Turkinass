@@ -80,7 +80,7 @@ The red wine quality dataset consists of 12 variables (columns) with 1,599 obser
 ```{r}
 reactable(winequality)
 ```
-<p id="caption">Table 2: A sample of the dataset's observations</p>
+<p id="caption">Table 2: Red wine quality dataset interactive table</p>
 <br>
 
 ### EDA
