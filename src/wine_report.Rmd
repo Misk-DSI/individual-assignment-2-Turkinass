@@ -6,6 +6,13 @@ output:
     numbersections: true
     toc: true
     df_print: paged
+
+knit: (function(input, ...) {
+    rmarkdown::render(
+      input,
+      output_dir = "../"
+    )
+  })
 ---
 
 ```{=html}
@@ -37,8 +44,9 @@ knitr::opts_chunk$set(echo = FALSE)
 library(here)
 library(tidyverse)
 library(knitr)
-library(corrplot)
+library(GGally)
 library(ggplot2)
+library(gridExtra)
 ```
 
 ### Introduction
@@ -47,12 +55,11 @@ In 2009, samples of white and red Vinho Verde wine were collected to predict hum
 To ensure that the wine is safe to consume and is of high quality, wine certification is required. This certification is assessed by several tests including physicochemical tests [1]—which was used to describe the wine in this dataset. Physicochemical tests characterize wine using 12 input variables described in Table 1.
 
 ```{r}
-winequality <- read.csv("/home/rstudio/Documents/individual-assignment-2-Turkinass/data/winequality-red.csv")
-winequality_arrt <- read.csv("/home/rstudio/Documents/individual-assignment-2-Turkinass/data/winequality_variables_table.csv")
-
+winequality <- read.csv(here("data/winequality-red.csv"))
+winequality_arrt <- read.csv(here("data/winequality_variables_table.csv"))
 ```
 
-### The Dataset
+### Data
 ```{r}
 kable(winequality_arrt)
 ```
@@ -71,12 +78,11 @@ sample_n(winequality, 5) %>%
 We will start the exploration by checking the correlations between the variables to check if there are any interesting findings.
 
 ```{r}
-corrplot(cor(winequality),  # make a correlation table
-         type = "lower",    # show only lower triangle
-         tl.col = "black",  # color legend black
-         tl.srt = 45,       # rotate legend 45 degrees
-         method = "number", # use numbers instead of circles
-         diag = FALSE)      # hide diagonal
+ggcorr(cor(winequality),  # make a correlation table
+       label = TRUE,
+       label_round = 2,   # show two decimal places
+       label_size = 3,
+       hjust = 0.8)       # move titles horizontally
 ```
 <p id="caption">Figure 1: Correlation plot of all variables</p>
 <br>
@@ -90,17 +96,23 @@ Correlated variables:
 
 Inversely correlated variables:
 
-1. `pH` / `fixed.acidityc` ✅
+1. `pH` / `fixed.acidityc`
 2. `citric.acid` / `volatile.acidity`
-3. `pH` / `citric.acid` ✅
+3. `pH` / `citric.acid`
 4. `alcohol` / `density`
 
 Notes:
 
+- Highest correlations are `density` / `fixed.acidity` (positive) and `pH` / `fixed.acidityc` (negative)
+- The higher the amount of `fixed.acidity` in a red wine the denser it gets.
+- `free.sulfur.dioxide` is a measure of free (i.e. `free.sulfur.dioxide`) and bound forms of sulfur dioxide.
 - `pH` inverse correlation with `fixed.acidity` and `citric.acid` is is not surprising since `pH` is a measure of acidity.
-- <strong>None of the variables have a any high correlation with the `quality` of the wine.</strong>
+- `citric.acid` has an inverse correlation with `volatile.acidity` because it is a fixed (onvolatile) acid.
+- `alcohol` has less density than water (the measure of density) which explains the inverse correlation.
+- <strong>None of the variables have a any high (>0.5) correlation with the `quality` of the wine.</strong>
 
-
+<br>
+Since no variable have major effect on our study variable `quality`. Let us take a look at its distribution to help us understand why.
 <br>
 ```{r}
 ggplot(winequality, aes(x = quality)) +
@@ -110,14 +122,73 @@ ggplot(winequality, aes(x = quality)) +
              color = "white",
              aes(label = ..count..),
              position=position_stack(vjust=0.5))
-
 ```
 <p id="caption">Figure 2: Number of wine samples based on its quality</p>
 <br>
-From the figure we can see that:
+From the figure above we can see that:
 
 - Samples quality range is [3-8]
+- There are zero samples of wine with quality level (1, 2, 9, 10)
 - 95% of the samples fall in quality level of 5, 6 and 7
+- 82% of the samples fall in quality level of 5 and 6
+
+This distribution may explain why variables does not affects the quality much since a large portion (82%) of it is limited to two quality levels (5 and 6).
+
+<br>
+To compensate the limited variation samples with different quality levels, we will consider variables with correlation that are above use a new threshold (>0.25) from Figure 1.
+
+We see that there are 2 correlated variables to `quality` and one inversely correlated variable.
+
+Correlated variables:
+
+1. `quality` / `sulphates`
+2. `quality` / `alcohol`
+
+Inversely correlated variable:
+
+1. `quality` / `volatile.acidity` 
+
+<br>
+Now let us see how each of  `sulphates`, `alcohol` and `volatile.acidity` affect the `quality` of the wine.
+
+```{r}
+ggplot(winequality,
+       aes(x=as.factor(quality), # to consider it as distinct levels
+           y=sulphates,
+           fill=as.factor(quality))) +
+  geom_boxplot() +
+  labs(x = "", y="Sulphates (g/dm^3)") +
+  guides(fill="none") -> figure3_p1
+
+ggplot(winequality,
+       aes(x=as.factor(quality),
+           y=alcohol,
+           fill=as.factor(quality))) +
+  geom_boxplot() +
+  labs(x = "Quality Level", y="Alcohol (%)") +
+  guides(fill="none") -> figure3_p2
+
+ggplot(winequality,
+       aes(x=as.factor(quality),
+           y=volatile.acidity,
+           fill=as.factor(quality))) +
+  geom_boxplot() +
+  labs(x = "", y="Volatile acidity (g/dm^3)") +
+  guides(fill="none") -> figure3_p3
+
+grid.arrange(figure3_p1, figure3_p2, figure3_p3, nrow = 1)
+```
+<p id="caption">Figure 3: Box and whisker plot of wine quality level against sulphates, alcohol and volatile acidity </p>
+<br>
+From the above figure, we can see that:
+
+- The positive `quality` correlation with `sulphates`, `alcohol` and inverse correlation with `volatile.acidity` is now clearer.
+- Quality levels 5 and 6 have many outliers in all plots, which probably is due its larger sample size compared to the rest of levels.
+- The large number of outliers in quality levels 5 and 6 (the most frequent samples) may explain its relatively low correlation with the other variables.
+
+### Conclusion
+
+In conclusion we found that the red wine quality dataset does not have enough variation in its samples when it comes to `quality`, with that in mind, the most influencing variables on its quality are `sulphates`, `alcohol` and `volatile.acidity` (negatively).
 
 ### References
 
@@ -125,7 +196,6 @@ From the figure we can see that:
 
 [2] Cortez, Paulo, Cerdeira, A., Almeida, F., Matos, T. & Reis, J.. (2009). Wine Quality. UCI Machine Learning Repository.
 
-### Conclusion
 
 
 ### Source Code
