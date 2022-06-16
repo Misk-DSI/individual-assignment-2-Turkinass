@@ -1,0 +1,218 @@
+---
+title: "<strong>Red Wine Quality EDA</strong>"
+author: "Turki Alsaedi, 16 Jun 2022 <br><br> Table of Contents"
+output:
+  html_document:
+    numbersections: true
+    toc: true
+
+knit: (function(input, ...) {
+    rmarkdown::render(
+      input,
+      output_dir = "../"
+    )
+  })
+---
+
+```{=html}
+<style>
+a {
+    text-decoration:underline;
+    color: #333333;
+}
+#caption{
+    color: #777777;
+}
+body {
+text-align: justify;
+max-width: 800px;
+margin: auto;
+font-size: 18px;
+font-family: "Times New Roman", Times, serif;
+}
+.reactable{
+  position:relative;
+  width: 160% !important;
+  left: 50%;
+  transform: translateX(-50%);
+}
+</style>
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(here)        # relative paths in rmd
+library(tidyverse)
+library(reactable)   # make interactive tables
+library(janitor)     # clean dataset names
+library(knitr)
+library(GGally)      # used for correlation matrix
+library(ggplot2)
+library(gridExtra)   # used to combine multiple plots in one plot
+```
+<br>
+
+### Introduction
+In 2009, samples of white and red Vinho Verde wine were collected to predict human taste in wine and use it to improve its quality and, eventually, increase wine sales. These samples were divided into to datasets: red and white wine quality [1, 2]. In this report, we will examine the red wine dataset and apply exploratory data analysis (EDA) and data munging on it.
+
+To ensure that the wine is safe to consume and is of high quality, wine certification is required. This certification is assessed by several tests including physicochemical tests [1]—which was used to describe the wine in this dataset. Physicochemical tests characterize wine using 12 input variables described in Table 1.
+
+```{r}
+winequality_raw <- read.csv(here("data/winequality-red.csv"))
+winequality_arrt <- read.csv(here("data/winequality_variables_table.csv"))
+```
+
+```{r}
+# clean dataset names
+winequality <- clean_names(winequality_raw)
+```
+<br>
+
+### Data
+```{r}
+kable(winequality_arrt)
+```
+<p id="caption">Table 1: Red wine quality dataset input variables, units and their descriptions</p>
+
+<br>
+
+The red wine quality dataset consists of 12 variables (columns) with 1,599 observations (rows). An interactive tables displaying the dataset content is shown in Table 2.
+```{r}
+reactable(winequality)
+```
+<p id="caption">Table 2: Red wine quality dataset interactive table</p>
+<br>
+
+### EDA
+We will start the exploration by checking the correlations between the variables to check if there are any interesting findings.
+
+```{r}
+ggcorr(cor(winequality),  # make a correlation table
+       label = TRUE,
+       label_round = 2,   # show two decimal places
+       label_size = 3,
+       layout.exp = 2,    # prevent cropping
+       hjust = 0.9)       # move titles horizontally
+```
+<p id="caption">Figure 1: Correlation plot of all variables</p>
+<br>
+Based on figure above, we can observe that there are 3 highly (>0.5) correlated variables and 4 are highly inversely correlated variables.
+
+Correlated variables:
+
+1. `density` / `fixed_acidity`
+2. `citric_acid` / `fixed_acidity`
+3. `total_sulfur_dioxide` / `free_sulfur_dioxide`
+
+Inversely correlated variables:
+
+1. `p_H` / `fixed_acidityc`
+2. `citric_acid` / `volatile_acidity`
+3. `p_H` / `citric_acid`
+4. `alcohol` / `density`
+
+Notes:
+
+- Highest correlations are `density` / `fixed_acidity` (positive) and `p_H` / `fixed_acidity` (negative)
+- The higher the amount of `fixed_acidity` in a red wine the denser it gets.
+- `free_sulfur_dioxide` is a measure of free (i.e. `free_sulfur_dioxide`) and bound forms of sulfur dioxide.
+- `p_H` inverse correlation with `fixed_acidity` and `citric_acid` is is not surprising since `p_H` is a measure of acidity.
+- `citric_acid` has an inverse correlation with `volatile_acidity` because it is a fixed (onvolatile) acid.
+- `alcohol` has less density than water (the measure of density) which explains the inverse correlation.
+- <strong>None of the variables have a any high (>0.5) correlation with the `quality` of the wine.</strong>
+
+<br>
+Since no variable have major effect on our study variable `quality`. Let us take a look at its distribution to help us understand why.
+<br>
+```{r, fig.width = 8}
+ggplot(winequality, aes(x = quality)) +
+  geom_bar(stat = "count", fill="dark red") + 
+  labs(x = "Wine quality", y = "No. of samples") +
+  stat_count(geom = "text", 
+             color = "white",
+             aes(label = ..count..),
+             position=position_stack(vjust=0.5))
+```
+<p id="caption">Figure 2: Number of wine samples based on its quality</p>
+<br>
+From the figure above we can see that:
+
+- Samples quality range is [3-8]
+- There are zero samples of wine with quality level (1, 2, 9, 10)
+- 95% of the samples fall in quality level of 5, 6 and 7
+- 82% of the samples fall in quality level of 5 and 6
+
+This distribution may explain why variables does not affects the quality much since a large portion (82%) of it is limited to two quality levels (5 and 6).
+
+<br>
+To compensate the limited variation samples with different quality levels, we will consider variables with correlation that are above use a new threshold (>0.25) from Figure 1.
+
+We see that there are 2 correlated variables to `quality` and one inversely correlated variable.
+
+Correlated variables:
+
+1. `quality` / `sulphates`
+2. `quality` / `alcohol`
+
+Inversely correlated variable:
+
+1. `quality` / `volatile_acidity` 
+
+<br>
+Now let us see how each of  `sulphates`, `alcohol` and `volatile_acidity` affect the `quality` of the wine.
+
+```{r, fig.width = 8}
+ggplot(winequality,
+       aes(x=as.factor(quality), # to consider it as distinct levels
+           y=sulphates,
+           fill=as.factor(quality))) +
+  geom_boxplot() +
+  labs(x = "", y="Sulphates (g/dm^3)") +
+  guides(fill="none") -> figure3_p1
+
+ggplot(winequality,
+       aes(x=as.factor(quality),
+           y=alcohol,
+           fill=as.factor(quality))) +
+  geom_boxplot() +
+  labs(x = "Quality Level", y="Alcohol (%)") +
+  guides(fill="none") -> figure3_p2
+
+ggplot(winequality,
+       aes(x=as.factor(quality),
+           y=volatile_acidity,
+           fill=as.factor(quality))) +
+  geom_boxplot() +
+  labs(x = "", y="Volatile acidity (g/dm^3)") +
+  guides(fill="none") -> figure3_p3
+
+grid.arrange(figure3_p1, figure3_p2, figure3_p3, nrow = 1)
+```
+<p id="caption">Figure 3: Box and whisker plot of wine quality level against sulphates, alcohol and volatile acidity </p>
+<br>
+From the above figure, we can see that:
+
+- The positive `quality` correlation with `sulphates`, `alcohol` and inverse correlation with `volatile_acidity` is now clearer.
+- Quality levels 5 and 6 have many outliers in all plots, which probably is due its larger sample size compared to the rest of levels.
+- The large number of outliers in quality levels 5 and 6 (the most frequent samples) may explain its relatively low correlation with the other variables.
+
+<br>
+
+### Conclusion
+
+In conclusion we found that the red wine quality dataset does not have enough variation in its samples when it comes to `quality`, with that in mind, the most influencing variables on its quality are `sulphates`, `alcohol` (positively). and `volatile_acidity` (negatively).
+
+<br>
+
+### References
+
+[1] P. Cortez, A. Cerdeira, F. Almeida, T. Matos and J. Reis. Modeling wine preferences by data mining from physicochemical properties. In Decision Support Systems, Elsevier, 47(4):547-553, 2009.
+
+[2] Cortez, Paulo, Cerdeira, A., Almeida, F., Matos, T. & Reis, J.. (2009). Wine Quality. UCI Machine Learning Repository.
+
+<br>
+
+### Source Code
+This report is hosted on Github Pages and the repo can be accessed via [this link](https://github.com/Misk-DSI/individual-assignment-2-Turkinass).
+
+<br><br><br>
