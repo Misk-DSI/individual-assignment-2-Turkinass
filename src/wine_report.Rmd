@@ -114,7 +114,7 @@ Notes:
 <br>
 Since no variable have major effect on our study variable `quality`. Let us take a look at its distribution to help us understand why.
 <br>
-```{r}
+```{r, fig.width = 8}
 ggplot(winequality, aes(x = quality)) +
   geom_bar(stat = "count", fill="dark red") + 
   labs(x = "Wine quality", y = "No. of samples") +
@@ -151,7 +151,7 @@ Inversely correlated variable:
 <br>
 Now let us see how each of  `sulphates`, `alcohol` and `volatile.acidity` affect the `quality` of the wine.
 
-```{r}
+```{r, fig.width = 8}
 ggplot(winequality,
        aes(x=as.factor(quality), # to consider it as distinct levels
            y=sulphates,
@@ -188,7 +188,7 @@ From the above figure, we can see that:
 
 ### Conclusion
 
-In conclusion we found that the red wine quality dataset does not have enough variation in its samples when it comes to `quality`, with that in mind, the most influencing variables on its quality are `sulphates`, `alcohol` and `volatile.acidity` (negatively).
+In conclusion we found that the red wine quality dataset does not have enough variation in its samples when it comes to `quality`, with that in mind, the most influencing variables on its quality are `sulphates`, `alcohol` (positively). and `volatile.acidity` (negatively).
 
 <br>
 
