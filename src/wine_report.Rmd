@@ -1,0 +1,134 @@
+---
+title: "<strong>Red Wine Quality EDA</strong>"
+author: "Turki Alsaedi, 16 Jun 2022 <br><br> Table of Contents"
+output:
+  html_document:
+    numbersections: true
+    toc: true
+    df_print: paged
+---
+
+```{=html}
+<style>
+a {
+    text-decoration:underline;
+    color: #333333;
+}
+#caption{
+    color: #777777;
+}
+body {
+text-align: justify;
+max-width: 700px;
+margin: auto;
+font-size: 15px;
+font-family: "Times New Roman", Times, serif;
+}
+table{
+  position:relative;
+  left: 50%;
+  transform: translateX(-50%);
+}
+</style>
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(here)
+library(tidyverse)
+library(knitr)
+library(corrplot)
+library(ggplot2)
+```
+
+### Introduction
+In 2009, samples of white and red Vinho Verde wine were collected to predict human taste in wine and use it to improve its quality and, eventually, increase wine sales. These samples were divided into to datasets: red and white wine quality [1, 2]. In this report, we will examine the red wine dataset and apply exploratory data analysis (EDA) and data munging on it.
+
+To ensure that the wine is safe to consume and is of high quality, wine certification is required. This certification is assessed by several tests including physicochemical tests [1]—which was used to describe the wine in this dataset. Physicochemical tests characterize wine using 12 input variables described in Table 1.
+
+```{r}
+winequality <- read.csv("/home/rstudio/Documents/individual-assignment-2-Turkinass/data/winequality-red.csv")
+winequality_arrt <- read.csv("/home/rstudio/Documents/individual-assignment-2-Turkinass/data/winequality_variables_table.csv")
+
+```
+
+### The Dataset
+```{r}
+kable(winequality_arrt)
+```
+<p id="caption">Table 1: Red wine quality dataset input variables, units and their descriptions</p>
+
+<br>
+
+The red wine quality dataset consists of 12 variables (columns) with 1,599 observations (rows). A sample of the dataset is shown in Table 2.
+```{r}
+sample_n(winequality, 5) %>% 
+  kable()
+```
+<p id="caption">Table 2: A sample of the dataset's observations</p>
+
+### EDA
+We will start the exploration by checking the correlations between the variables to check if there are any interesting findings.
+
+```{r}
+corrplot(cor(winequality),  # make a correlation table
+         type = "lower",    # show only lower triangle
+         tl.col = "black",  # color legend black
+         tl.srt = 45,       # rotate legend 45 degrees
+         method = "number", # use numbers instead of circles
+         diag = FALSE)      # hide diagonal
+```
+<p id="caption">Figure 1: Correlation plot of all variables</p>
+<br>
+Based on figure above, we can observe that there are 3 highly (>0.5) correlated variables and 4 are highly inversely correlated variables.
+
+Correlated variables:
+
+1. `density` / `fixed.acidity`
+2. `citric.acid` / `fixed.acidity`
+3. `total.sulfur.dioxide` / `free.sulfur.dioxide`
+
+Inversely correlated variables:
+
+1. `pH` / `fixed.acidityc` ✅
+2. `citric.acid` / `volatile.acidity`
+3. `pH` / `citric.acid` ✅
+4. `alcohol` / `density`
+
+Notes:
+
+- `pH` inverse correlation with `fixed.acidity` and `citric.acid` is is not surprising since `pH` is a measure of acidity.
+- <strong>None of the variables have a any high correlation with the `quality` of the wine.</strong>
+
+
+<br>
+```{r}
+ggplot(winequality, aes(x = quality)) +
+  geom_bar(stat = "count", fill="dark red") + 
+  labs(x = "Wine quality", y = "No. of samples") +
+  stat_count(geom = "text", 
+             color = "white",
+             aes(label = ..count..),
+             position=position_stack(vjust=0.5))
+
+```
+<p id="caption">Figure 2: Number of wine samples based on its quality</p>
+<br>
+From the figure we can see that:
+
+- Samples quality range is [3-8]
+- 95% of the samples fall in quality level of 5, 6 and 7
+
+### References
+
+[1] P. Cortez, A. Cerdeira, F. Almeida, T. Matos and J. Reis. Modeling wine preferences by data mining from physicochemical properties. In Decision Support Systems, Elsevier, 47(4):547-553, 2009.
+
+[2] Cortez, Paulo, Cerdeira, A., Almeida, F., Matos, T. & Reis, J.. (2009). Wine Quality. UCI Machine Learning Repository.
+
+### Conclusion
+
+
+### Source Code
+This report is hosted on Github Pages and the repo can be accessed via [this link](https://github.com/Misk-DSI/individual-assignment-2-Turkinass).
+
+<br><br><br>
