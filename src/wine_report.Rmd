@@ -5,7 +5,6 @@ output:
   html_document:
     numbersections: true
     toc: true
-    df_print: paged
 
 knit: (function(input, ...) {
     rmarkdown::render(
@@ -26,9 +25,9 @@ a {
 }
 body {
 text-align: justify;
-max-width: 700px;
+max-width: 800px;
 margin: auto;
-font-size: 15px;
+font-size: 18px;
 font-family: "Times New Roman", Times, serif;
 }
 table{
@@ -82,7 +81,8 @@ ggcorr(cor(winequality),  # make a correlation table
        label = TRUE,
        label_round = 2,   # show two decimal places
        label_size = 3,
-       hjust = 0.8)       # move titles horizontally
+       layout.exp = 2,    # prevent cropping
+       hjust = 0.9)       # move titles horizontally
 ```
 <p id="caption">Figure 1: Correlation plot of all variables</p>
 <br>
@@ -190,13 +190,15 @@ From the above figure, we can see that:
 
 In conclusion we found that the red wine quality dataset does not have enough variation in its samples when it comes to `quality`, with that in mind, the most influencing variables on its quality are `sulphates`, `alcohol` and `volatile.acidity` (negatively).
 
+<br>
+
 ### References
 
 [1] P. Cortez, A. Cerdeira, F. Almeida, T. Matos and J. Reis. Modeling wine preferences by data mining from physicochemical properties. In Decision Support Systems, Elsevier, 47(4):547-553, 2009.
 
 [2] Cortez, Paulo, Cerdeira, A., Almeida, F., Matos, T. & Reis, J.. (2009). Wine Quality. UCI Machine Learning Repository.
 
-
+<br>
 
 ### Source Code
 This report is hosted on Github Pages and the repo can be accessed via [this link](https://github.com/Misk-DSI/individual-assignment-2-Turkinass).
