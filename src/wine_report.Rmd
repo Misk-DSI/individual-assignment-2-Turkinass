@@ -30,8 +30,9 @@ margin: auto;
 font-size: 18px;
 font-family: "Times New Roman", Times, serif;
 }
-table{
+.reactable{
   position:relative;
+  width: 160% !important;
   left: 50%;
   transform: translateX(-50%);
 }
@@ -42,12 +43,14 @@ table{
 knitr::opts_chunk$set(echo = FALSE)
 library(here)        # relative paths in rmd
 library(tidyverse)
+library(reactable)   # make interactive tables
 library(janitor)     # clean dataset names
 library(knitr)
 library(GGally)      # used for correlation matrix
 library(ggplot2)
 library(gridExtra)   # used to combine multiple plots in one plot
 ```
+<br>
 
 ### Introduction
 In 2009, samples of white and red Vinho Verde wine were collected to predict human taste in wine and use it to improve its quality and, eventually, increase wine sales. These samples were divided into to datasets: red and white wine quality [1, 2]. In this report, we will examine the red wine dataset and apply exploratory data analysis (EDA) and data munging on it.
@@ -63,7 +66,7 @@ winequality_arrt <- read.csv(here("data/winequality_variables_table.csv"))
 # clean dataset names
 winequality <- clean_names(winequality_raw)
 ```
-
+<br>
 
 ### Data
 ```{r}
@@ -73,12 +76,12 @@ kable(winequality_arrt)
 
 <br>
 
-The red wine quality dataset consists of 12 variables (columns) with 1,599 observations (rows). A sample of the dataset is shown in Table 2.
+The red wine quality dataset consists of 12 variables (columns) with 1,599 observations (rows). An interactive tables displaying the dataset content is shown in Table 2.
 ```{r}
-sample_n(winequality, 5) %>% 
-  kable()
+reactable(winequality)
 ```
 <p id="caption">Table 2: A sample of the dataset's observations</p>
+<br>
 
 ### EDA
 We will start the exploration by checking the correlations between the variables to check if there are any interesting findings.
@@ -192,6 +195,8 @@ From the above figure, we can see that:
 - The positive `quality` correlation with `sulphates`, `alcohol` and inverse correlation with `volatile_acidity` is now clearer.
 - Quality levels 5 and 6 have many outliers in all plots, which probably is due its larger sample size compared to the rest of levels.
 - The large number of outliers in quality levels 5 and 6 (the most frequent samples) may explain its relatively low correlation with the other variables.
+
+<br>
 
 ### Conclusion
 
