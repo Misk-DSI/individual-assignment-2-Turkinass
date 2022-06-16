@@ -40,12 +40,13 @@ table{
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
-library(here)
+library(here)        # relative paths in rmd
 library(tidyverse)
+library(janitor)     # clean dataset names
 library(knitr)
-library(GGally)
+library(GGally)      # used for correlation matrix
 library(ggplot2)
-library(gridExtra)
+library(gridExtra)   # used to combine multiple plots in one plot
 ```
 
 ### Introduction
@@ -54,9 +55,15 @@ In 2009, samples of white and red Vinho Verde wine were collected to predict hum
 To ensure that the wine is safe to consume and is of high quality, wine certification is required. This certification is assessed by several tests including physicochemical tests [1]—which was used to describe the wine in this dataset. Physicochemical tests characterize wine using 12 input variables described in Table 1.
 
 ```{r}
-winequality <- read.csv(here("data/winequality-red.csv"))
+winequality_raw <- read.csv(here("data/winequality-red.csv"))
 winequality_arrt <- read.csv(here("data/winequality_variables_table.csv"))
 ```
+
+```{r}
+# clean dataset names
+winequality <- clean_names(winequality_raw)
+```
+
 
 ### Data
 ```{r}
@@ -90,24 +97,24 @@ Based on figure above, we can observe that there are 3 highly (>0.5) correlated 
 
 Correlated variables:
 
-1. `density` / `fixed.acidity`
-2. `citric.acid` / `fixed.acidity`
-3. `total.sulfur.dioxide` / `free.sulfur.dioxide`
+1. `density` / `fixed_acidity`
+2. `citric_acid` / `fixed_acidity`
+3. `total_sulfur_dioxide` / `free_sulfur_dioxide`
 
 Inversely correlated variables:
 
-1. `pH` / `fixed.acidityc`
-2. `citric.acid` / `volatile.acidity`
-3. `pH` / `citric.acid`
+1. `p_H` / `fixed_acidityc`
+2. `citric_acid` / `volatile_acidity`
+3. `p_H` / `citric_acid`
 4. `alcohol` / `density`
 
 Notes:
 
-- Highest correlations are `density` / `fixed.acidity` (positive) and `pH` / `fixed.acidityc` (negative)
-- The higher the amount of `fixed.acidity` in a red wine the denser it gets.
-- `free.sulfur.dioxide` is a measure of free (i.e. `free.sulfur.dioxide`) and bound forms of sulfur dioxide.
-- `pH` inverse correlation with `fixed.acidity` and `citric.acid` is is not surprising since `pH` is a measure of acidity.
-- `citric.acid` has an inverse correlation with `volatile.acidity` because it is a fixed (onvolatile) acid.
+- Highest correlations are `density` / `fixed_acidity` (positive) and `p_H` / `fixed_acidity` (negative)
+- The higher the amount of `fixed_acidity` in a red wine the denser it gets.
+- `free_sulfur_dioxide` is a measure of free (i.e. `free_sulfur_dioxide`) and bound forms of sulfur dioxide.
+- `p_H` inverse correlation with `fixed_acidity` and `citric_acid` is is not surprising since `p_H` is a measure of acidity.
+- `citric_acid` has an inverse correlation with `volatile_acidity` because it is a fixed (onvolatile) acid.
 - `alcohol` has less density than water (the measure of density) which explains the inverse correlation.
 - <strong>None of the variables have a any high (>0.5) correlation with the `quality` of the wine.</strong>
 
@@ -146,10 +153,10 @@ Correlated variables:
 
 Inversely correlated variable:
 
-1. `quality` / `volatile.acidity` 
+1. `quality` / `volatile_acidity` 
 
 <br>
-Now let us see how each of  `sulphates`, `alcohol` and `volatile.acidity` affect the `quality` of the wine.
+Now let us see how each of  `sulphates`, `alcohol` and `volatile_acidity` affect the `quality` of the wine.
 
 ```{r, fig.width = 8}
 ggplot(winequality,
@@ -170,7 +177,7 @@ ggplot(winequality,
 
 ggplot(winequality,
        aes(x=as.factor(quality),
-           y=volatile.acidity,
+           y=volatile_acidity,
            fill=as.factor(quality))) +
   geom_boxplot() +
   labs(x = "", y="Volatile acidity (g/dm^3)") +
@@ -182,13 +189,13 @@ grid.arrange(figure3_p1, figure3_p2, figure3_p3, nrow = 1)
 <br>
 From the above figure, we can see that:
 
-- The positive `quality` correlation with `sulphates`, `alcohol` and inverse correlation with `volatile.acidity` is now clearer.
+- The positive `quality` correlation with `sulphates`, `alcohol` and inverse correlation with `volatile_acidity` is now clearer.
 - Quality levels 5 and 6 have many outliers in all plots, which probably is due its larger sample size compared to the rest of levels.
 - The large number of outliers in quality levels 5 and 6 (the most frequent samples) may explain its relatively low correlation with the other variables.
 
 ### Conclusion
 
-In conclusion we found that the red wine quality dataset does not have enough variation in its samples when it comes to `quality`, with that in mind, the most influencing variables on its quality are `sulphates`, `alcohol` (positively). and `volatile.acidity` (negatively).
+In conclusion we found that the red wine quality dataset does not have enough variation in its samples when it comes to `quality`, with that in mind, the most influencing variables on its quality are `sulphates`, `alcohol` (positively). and `volatile_acidity` (negatively).
 
 <br>
 
